@@ -1,0 +1,96 @@
+apiVersion: sparkoperator.k8s.io/v1beta2
+kind: SparkApplication
+metadata:
+  name: pyspark-template-job
+  namespace: default
+spec:
+  type: Python
+  mode: cluster
+  image: hudhud-registry-vpc.me-central-1.cr.aliyuncs.com/data/data-spark-template:latest
+  imagePullPolicy: Always
+  mainApplicationFile: local:///spark-template/src/example_spark_job.py
+  sparkVersion: 3.5.0
+  timeToLiveSeconds: 7200
+  sparkConf:
+    "spark.hadoop.fs.oss.impl": "org.apache.hadoop.fs.aliyun.oss.AliyunOSSFileSystem"
+    "spark.hadoop.fs.oss.endpoint": "$(OSS_ENDPOINT)"
+    "spark.hadoop.fs.oss.accessKeyId": "$(OSS_ACCESS_KEY_ID)"
+    "spark.hadoop.fs.oss.accessKeySecret": "$(OSS_ACCESS_KEY_SECRET)"
+    "spark.jars": "local:///jars/aliyun-sdk-oss-3.10.2.jar,local:///jars/hadoop-aliyun-3.2.0.jar"
+  dynamicAllocation:
+    enabled: true
+    initialExecutors: 1
+    minExecutors: 1
+    maxExecutors: 5
+  driver:
+    cores: 1
+    memory: 5g
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: pool
+                  operator: In
+                  values:
+                    - pay_as_you_go_cpu_pool
+    tolerations:
+      - key: app
+        operator: Equal
+        value: processing
+        effect: NoSchedule
+    env:
+      - name: OSS_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: spark-oss-read-write-secret
+            key: OSS_ACCESS_KEY_ID
+      - name: OSS_ACCESS_KEY_SECRET
+        valueFrom:
+          secretKeyRef:
+            name: spark-oss-read-write-secret
+            key: OSS_ACCESS_KEY_SECRET
+      - name: OSS_ENDPOINT
+        valueFrom:
+          secretKeyRef:
+            name: spark-oss-read-write-secret
+            key: OSS_ENDPOINT
+  executor:
+    cores: 1
+    instances: 2
+    memory: 5g
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: pool
+                  operator: In
+                  values:
+                    - pay_as_you_go_cpu_pool
+    tolerations:
+      - key: app
+        operator: Equal
+        value: processing
+        effect: NoSchedule
+    env:
+      - name: OSS_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: spark-oss-read-write-secret
+            key: OSS_ACCESS_KEY_ID
+      - name: OSS_ACCESS_KEY_SECRET
+        valueFrom:
+          secretKeyRef:
+            name: spark-oss-read-write-secret
+            key: OSS_ACCESS_KEY_SECRET
+      - name: OSS_ENDPOINT
+        valueFrom:
+          secretKeyRef:
+            name: spark-oss-read-write-secret
+            key: OSS_ENDPOINT
+  arguments:
+    - "--input"
+    - ""
+    - "--output"
+    - ""

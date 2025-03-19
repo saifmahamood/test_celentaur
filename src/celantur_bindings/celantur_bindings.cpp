@@ -1,5 +1,4 @@
 #include <pybind11/pybind11.h>
-#include <pybind11/bytes.h>
 #include <opencv2/opencv.hpp>
 #include "CelanturDetection.h"
 #include "CelanturSDKInterface.h"
@@ -72,8 +71,8 @@ private:
     CelanturSDK::Processor* processor;
 };
 
-PYBIND11_MODULE(celentaur_bindings, m) {
-    m.doc() = "Python bindings for Celantaur SDK anonymization functions";
+PYBIND11_MODULE(celantur_bindings, m) {
+    m.doc() = "Python bindings for Celantur SDK anonymization functions";
 
     py::class_<CelanturProcessor>(m, "CelanturProcessor")
         .def(py::init<const std::string&>(),
@@ -84,7 +83,7 @@ PYBIND11_MODULE(celentaur_bindings, m) {
              "Load the inference model from the given model file path.")
         .def("process_image", &CelanturProcessor::process_image,
              py::arg("image_data"),
-             "Process an image provided as bytes using the Celantaur SDK.")
+             "Process an image provided as bytes using the Celantur SDK.")
         .def("get_result", &CelanturProcessor::get_result,
              "Get the processed image as JPEG-encoded bytes.")
         .def("get_detections", &CelanturProcessor::get_detections,
