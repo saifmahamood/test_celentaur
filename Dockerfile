@@ -7,7 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update
 
 # Install required packages
-RUN apt-get -y install wget curl vim unzip
+RUN apt-get -y install curl
 
 # Install system dependencies including build tools, GTK, OpenSSL, and OpenCV dev packages
 RUN apt-get install -y \
@@ -22,6 +22,7 @@ RUN apt-get install -y \
     dpkg \
     libssl-dev \
     python3-pip \
+    libopencv-dev \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -36,9 +37,14 @@ RUN dpkg -i /app/celantur_sdk/debs/*.deb || (apt-get update && apt-get install -
 COPY src /app/src
 COPY pyproject.toml /app/
 
-RUN pip install poetry && poetry install --with dev
+RUN curl -sSL https://install.python-poetry.org | python3 - && \
+    ln -s /root/.local/bin/poetry /usr/local/bin/poetry
 
-RUN cd /app/src/celantur_bindings && python3 setup.py build_ext --inplace
+RUN poetry config virtualenvs.in-project true && \
+    poetry install --with dev
+
+RUN cd /app/src/celantur_bindings && \
+    bash -c '. /app/.venv/bin/activate && python3 setup.py build_ext --inplace'
 
 RUN mkdir -p /jars && \
     curl -o /jars/aliyun-sdk-oss-3.10.2.jar https://repo1.maven.org/maven2/com/aliyun/oss/aliyun-sdk-oss/3.10.2/aliyun-sdk-oss-3.10.2.jar && \
